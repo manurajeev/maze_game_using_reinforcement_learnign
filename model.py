@@ -7,7 +7,7 @@ from nn import NeuralNetwork
 import numpy as np
 
 # our class impements the base class of all nerural netword module
-class Linear_QNet(nn.Module):
+"""class Linear_QNet(nn.Module):
 
     # initializing a feed forward nueral network with 1 hidden layer
     # for our game the input depends on the state which has 8 parameter
@@ -29,16 +29,17 @@ class Linear_QNet(nn.Module):
         return output
 
     def save(self, file='saved_model.pth'):
-        torch.save(self.state_dict(), file)
+        torch.save(self.state_dict(), file)"""
 
 
 class trainer():
-    def __init__(self, model: Linear_QNet, learning_rate, gamma) -> None:
-        self.nnet = NeuralNetwork(neurons=[8,128,4],activation='relu')
+    def __init__(self, model: NeuralNetwork, 
+    learning_rate, gamma) -> None:
+        self.nnet = model
         self.learning_rate  = learning_rate
         self.gamma = gamma
-        self.model = model
-        self.optimizer = optim.Adam(model.parameters(), lr=self.learning_rate)
+        #self.model = model
+        #self.optimizer = optim.Adam(model.parameters(), lr=self.learning_rate)
         self.loss_function = nn.MSELoss()
 
 
@@ -78,7 +79,7 @@ class trainer():
             #TODO understand this logic
             prediction_clone[torch.argmax(action).item()] = q_new
         
-        print(prediction_clone)
+        #print(prediction_clone)
         # TODO empties the gradients????
         #not necessary to empty the gradients as we are not dependent on the prev grad values
         #self.optimizer.zero_grad()
@@ -87,7 +88,7 @@ class trainer():
         #loss = self.loss_function(torch.tensor(prediction_clone, dtype=torch.float), torch.tensor(predition, dtype=torch.float))
         #print(loss)
         loss2 = self.nnet.cost_function(prediction_clone,predition)
-        print(loss2)
+        #print(loss2)
         #applies the backpropogation to update the weights
         #loss.backward()
         self.nnet.backward(prediction_clone, predition)

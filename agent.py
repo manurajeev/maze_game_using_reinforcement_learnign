@@ -2,7 +2,8 @@ import torch
 import random
 import numpy as np
 from maze_game_ml import maze_game, Point, BLOCK_SIZE
-from model import Linear_QNet, trainer
+from model import trainer
+from nn import NeuralNetwork
 from plotter import plot
 
 
@@ -26,7 +27,8 @@ class Agent:
         self.gamma = 0.8 # discount rate
         self.memory = deque(maxlen= MEMORY_SIZE)
 
-        self.model = Linear_QNet((8, 128, 4,))
+        self.model = NeuralNetwork(neurons=[8,128,4],activation='sigmoid')
+        #self.model = Linear_QNet((8, 256, 4,))
         self.trainer = trainer(self.model, learning_rate=LEARNING_RATE, gamma=self.gamma)
 
     
@@ -154,9 +156,11 @@ class Agent:
             index = random.randint(0,3)
             action[index] = 1
         else:
-            temp = torch.tensor(state, dtype=torch.float)
-            model_action = self.model(temp)
-            index = torch.argmax(model_action).item()
+            # temp = torch.tensor(state, dtype=torch.float)
+            state = np.expand_dims(state, axis=0)
+            model_action = self.model.forward(state)
+            print(model_action)
+            index = np.argmax(model_action).item()
             action[index] = 1
         return action
 
@@ -196,7 +200,7 @@ def start_training():
             # can be removed if not required
             if score > record:
                 record = score
-                agent.model.save()
+                #agent.model.save()
 
             scores.append(score)
             total_score += score
