@@ -172,7 +172,7 @@ def start_training():
     game = maze_game()
 
     #1000 games will be played and the best model will be created
-    for i in range(1000):
+    while True:
         
         state = agent.get_state(game)
         # decide action

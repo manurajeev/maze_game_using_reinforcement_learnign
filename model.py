@@ -3,6 +3,9 @@ import torch.nn as nn #implement later yourself
 import torch.optim as optim
 import torch.nn.functional as F
 
+from nn import NeuralNetwork
+import numpy as np
+
 # our class impements the base class of all nerural netword module
 class Linear_QNet(nn.Module):
 
@@ -31,6 +34,7 @@ class Linear_QNet(nn.Module):
 
 class trainer():
     def __init__(self, model: Linear_QNet, learning_rate, gamma) -> None:
+        self.nnet = NeuralNetwork(neurons=[8,128,4],activation='relu')
         self.learning_rate  = learning_rate
         self.gamma = gamma
         self.model = model
@@ -43,49 +47,53 @@ class trainer():
     def train_step(self, state, action, reward, new_state, game_over):
 
         #convert the data to array format since we need it to work it with both single values and 
-        state = torch.tensor(state, dtype=torch.float)
+        #state = torch.tensor(state, dtype=torch.float)
         action = torch.tensor(action, dtype=torch.float)
         reward = torch.tensor(reward, dtype=torch.float)
-        new_state = torch.tensor(new_state, dtype=torch.float)
+        #new_state = torch.tensor(new_state, dtype=torch.float)
         #if array already present in #(n, x) format
 
         # if only single value -> need to convert it to (n, x) format
-        if len(state.shape) == 1:
+        if len(np.array(state).shape) == 1:
             #appends one dimention at the begining
-            state = torch.unsqueeze(state,0)
+            state = np.expand_dims(state, axis=0)
             action = torch.unsqueeze(action,0)
             reward = torch.unsqueeze(reward,0)
-            new_state = torch.unsqueeze(new_state,0)
+            new_state = np.expand_dims(new_state, axis=0)
             game_over = (game_over, )
 
         #Update rule implementation using bellman's equation
 
         #predicted Q value with current state
-        predition = self.model(state)
-
-        prediction_clone = predition.clone()
+        #predition = self.model(state)
+        predition = self.nnet.forward(np.array(state))
+        print(predition)
+        prediction_clone = predition.copy()
 
         for i in range(len(state)):
             q_new = reward[i]
             if not game_over[i]:
-                q_new = reward[i] + (self.gamma * torch.max(self.model(new_state[i])))
+                q_new = reward[i] + (self.gamma * np.max(self.nnet.forward(np.array(new_state))))
 
             #TODO understand this logic
-            prediction_clone[i][torch.argmax(action).item()] = q_new
+            prediction_clone[torch.argmax(action).item()] = q_new
         
-        
+        print(prediction_clone)
         # TODO empties the gradients????
-        self.optimizer.zero_grad()
+        #not necessary to empty the gradients as we are not dependent on the prev grad values
+        #self.optimizer.zero_grad()
 
         #difined the error as the squared difference between the new and the old q values
-        loss = self.loss_function(prediction_clone, predition)
-        
+        #loss = self.loss_function(torch.tensor(prediction_clone, dtype=torch.float), torch.tensor(predition, dtype=torch.float))
+        #print(loss)
+        loss2 = self.nnet.cost_function(prediction_clone,predition)
+        print(loss2)
         #applies the backpropogation to update the weights
-        loss.backward()
+        #loss.backward()
+        self.nnet.backward(prediction_clone, predition)
 
-
-        self.optimizer.step()
-
+        #self.optimizer.step()
+        self.nnet.optimize()
         #new q value = r + gamma * max(next_predicted Q val)
 
 
