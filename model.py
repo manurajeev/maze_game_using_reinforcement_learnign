@@ -68,16 +68,16 @@ class trainer():
         #predicted Q value with current state
         #predition = self.model(state)
         predition = self.nnet.forward(np.array(state))
-        print(predition)
+        #print(predition)
         prediction_clone = predition.copy()
 
         for i in range(len(state)):
             q_new = reward[i]
             if not game_over[i]:
-                q_new = reward[i] + (self.gamma * np.max(self.nnet.forward(np.array(new_state))))
+                q_new = reward[i] + (self.gamma * np.max(self.nnet.forward_target(np.expand_dims(np.array(new_state[i]), axis=0))))
 
             #TODO understand this logic
-            prediction_clone[torch.argmax(action).item()] = q_new
+            prediction_clone[i][torch.argmax(action).item()] = q_new
         
         #print(prediction_clone)
         # TODO empties the gradients????
@@ -87,15 +87,17 @@ class trainer():
         #difined the error as the squared difference between the new and the old q values
         #loss = self.loss_function(torch.tensor(prediction_clone, dtype=torch.float), torch.tensor(predition, dtype=torch.float))
         #print(loss)
-        loss2 = self.nnet.cost_function(prediction_clone,predition)
+        #loss2 = self.nnet.cost_function(prediction_clone,predition)
         #print(loss2)
         #applies the backpropogation to update the weights
         #loss.backward()
-        self.nnet.backward(prediction_clone, predition)
-
+        #self.nnet.backward(prediction_clone, predition)
+        self.nnet.backward(predition, prediction_clone)
         #self.optimizer.step()
         self.nnet.optimize()
         #new q value = r + gamma * max(next_predicted Q val)
+        print("weights1 ", self.nnet.params["weights1"][7][63])
+        #print("weights2 ", self.nnet.params["weights2"])
 
 
         #

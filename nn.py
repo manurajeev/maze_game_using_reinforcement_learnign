@@ -17,6 +17,7 @@ class NeuralNetwork:
         self.params = self.initialize()
         # Save all linear and activation caches
         self.cache = {}
+        self.cache_target = {}
 
     #Activation Functions
     def sigmoid(self, x, derivative=False):
@@ -51,24 +52,43 @@ class NeuralNetwork:
         output_layer = self.neurons[2]
         
         params = {
-            "weights1": 0.01 * np.random.randn(hidden_layer, input_layer),
-            "bias1": 0.01 * np.zeros((hidden_layer, 1)),
-            "weights2": 0.01 * np.random.randn(output_layer, hidden_layer),
-            "bias2": 0.01 * np.zeros((output_layer, 1))
+            "weights1": 0.01 * np.random.randn(input_layer, hidden_layer),
+            "bias1": 0.01 * np.zeros((1, hidden_layer)),
+            "weights2": 0.01 * np.random.randn(hidden_layer, output_layer),
+            "bias2": 0.01 * np.zeros((1, output_layer))
         }
         return params
     
 
     def forward(self, x):
+        # self.cache["inp"] = x
+        # self.cache["linear1"] = np.matmul(self.params["weights1"], self.cache["inp"].T) + self.params["bias1"]
+        # self.cache["act1"] = self.activation(self.cache["linear1"])
+        # self.cache["linear2"] = np.matmul(self.params["weights2"], self.cache["act1"]) + self.params["bias2"]
+
         self.cache["inp"] = x
-        self.cache["linear1"] = np.matmul(self.params["weights1"], self.cache["inp"].T) + self.params["bias1"]
+        self.cache["linear1"] = np.dot(self.cache["inp"],self.params["weights1"]) + self.params["bias1"]
         self.cache["act1"] = self.activation(self.cache["linear1"])
-        self.cache["linear2"] = np.matmul(self.params["weights2"], self.cache["act1"]) + self.params["bias2"]
-        self.cache["act2"] = self.activation(self.cache["linear2"])
-        return self.cache["act2"]
+        self.cache["linear2"] = np.dot(self.cache["act1"],self.params["weights2"]) + self.params["bias2"]
+        #self.cache["act2"] = self.activation(self.cache["linear2"])
+        return self.cache["linear2"]
+
+    def forward_target(self, x):
+        # self.cache["inp"] = x
+        # self.cache["linear1"] = np.matmul(self.params["weights1"], self.cache["inp"].T) + self.params["bias1"]
+        # self.cache["act1"] = self.activation(self.cache["linear1"])
+        # self.cache["linear2"] = np.matmul(self.params["weights2"], self.cache["act1"]) + self.params["bias2"]
+
+        self.cache_target["inp"] = x
+        self.cache_target["linear1"] = np.dot(self.cache["inp"],self.params["weights1"]) + self.params["bias1"]
+        self.cache_target["act1"] = self.activation(self.cache["linear1"])
+        self.cache_target["linear2"] = np.dot(self.cache["act1"],self.params["weights2"]) + self.params["bias2"]
+        #self.cache["act2"] = self.activation(self.cache["linear2"])
+        return self.cache_target["linear2"]
     
     #backpropagate function
     def backward(self, y, output):
+        '''
         m = y.shape[0]
         
         dZ2 = output - y
@@ -79,6 +99,20 @@ class NeuralNetwork:
         dZ1 = dA1 * self.activation(self.cache["linear1"], derivative=True)
         dW1 = (1./m) * np.dot(dZ1, self.cache["inp"])
         db1 = (1./m) * np.sum(dZ1, axis=1, keepdims=True)
+
+        self.grads = {"weights1": dW1, "bias1": db1, "weights2": dW2, "bias2": db2}
+        return self.grads
+        '''
+        m = y.shape[0]
+        
+        dZ2 = output - y
+        dW2 = (1./m) * np.dot(self.cache["act1"].T, dZ2)
+        db2 = (1./m) * np.sum(dZ2, axis=0, keepdims=True)
+
+        dA1 = np.dot(dZ2, self.params["weights2"].T)
+        dZ1 = dA1 * self.activation(self.cache["linear1"], derivative=True)
+        dW1 = (1./m) * np.dot(self.cache["inp"].T, dZ1)
+        db1 = (1./m) * np.sum(dZ1, axis=0, keepdims=True)
 
         self.grads = {"weights1": dW1, "bias1": db1, "weights2": dW2, "bias2": db2}
         return self.grads

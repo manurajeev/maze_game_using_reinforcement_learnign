@@ -116,7 +116,7 @@ class maze_game:
         #check if treasure found
         if self.protagonist == self.treasure:
             self.score += 1
-            reward = 10
+            reward += 100
             self.moves = 0
             self.place_treasure()
 

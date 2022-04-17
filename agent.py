@@ -15,7 +15,7 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 MEMORY_SIZE = 100000
-BATCH_SIZE = 1000
+BATCH_SIZE = 100
 LEARNING_RATE = 0.01
 RANDOM_GAME_THRESHOLD = 100
 
@@ -27,7 +27,7 @@ class Agent:
         self.gamma = 0.8 # discount rate
         self.memory = deque(maxlen= MEMORY_SIZE)
 
-        self.model = NeuralNetwork(neurons=[8,128,4],activation='sigmoid')
+        self.model = NeuralNetwork(neurons=[8,64,4],activation='relu')
         #self.model = Linear_QNet((8, 256, 4,))
         self.trainer = trainer(self.model, learning_rate=LEARNING_RATE, gamma=self.gamma)
 
